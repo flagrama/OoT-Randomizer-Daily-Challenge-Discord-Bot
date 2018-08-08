@@ -1,0 +1,10 @@
+.vscode/
+rando/
+
+*.z64
+*.wad
+
+common-key.bin
+credentials.json
+client_secrets.json
+base_credentials.json

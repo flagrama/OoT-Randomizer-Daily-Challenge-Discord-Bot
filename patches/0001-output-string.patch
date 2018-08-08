@@ -1,0 +1,26 @@
+From d87e28191ea9ff535321e06418380703cab1b9d4 Mon Sep 17 00:00:00 2001
+From: Vincent Cunningham <v.cunningham@flagrama.com>
+Date: Tue, 7 Aug 2018 00:38:43 -0400
+Subject: [PATCH] output string
+
+---
+ Settings.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Settings.py b/Settings.py
+index 240f53e..0ae5bd2 100644
+--- a/Settings.py
++++ b/Settings.py
+@@ -1136,4 +1136,8 @@ def get_settings_from_command_line_args():
+     if args.settings_string is not None:
+         settings.update_with_settings_string(args.settings_string)
+ 
++    # Daily Seed Patch
++    print(settings.get_settings_string())
++    print(settings.seed)
++
+     return settings, args.gui, args.loglevel
+\ No newline at end of file
+-- 
+2.17.1
+

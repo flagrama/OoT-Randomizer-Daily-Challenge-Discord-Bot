@@ -1,0 +1,1 @@
+Place the `Legend of Zelda, The - Ocarina of Time (U) (V1.0).z64` and `Legend of Zelda, The - Ocarina of Time (U) (V1.2) [Wii VC].wad` files in this directory
