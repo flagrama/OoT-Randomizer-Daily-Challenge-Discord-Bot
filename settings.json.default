@@ -1,0 +1,64 @@
+{
+    "config": {
+        "repo_url": "https://github.com/TestRunnerSRL/OoT-Randomizer.git",
+        "repo_branch": "Dev",
+        "repo_local_name": "rando",
+        "discord_token": "bot-token-here",
+        "discord_channel_id": "bot-channel-id-here",
+        "base_rom_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.0).z64",
+        "base_wad_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.2) [Wii VC].wad",
+        "output_directory": "/full/path/to/dailies/directory"
+    },
+    "settings_weighted": {
+        "openness": {
+            "options": [
+                {"name": "closed", "weight": 0.25},
+                {"name": "open_door_of_time", "weight": 0.25, "argument": "--open_door_of_time"},
+                {"name": "open_forest", "weight": 0.25, "argument": "--open_forest"},
+                {"name": "open", "weight": 0.25, "argument": "--open_forest --open_door_of_time"}
+            ]
+        },
+        "bridge": {
+            "argument": "--bridge",
+            "options": [
+                {"name": "medallions", "weight": 0.30},
+                {"name": "vanilla", "weight": 0.25},
+                {"name": "dungeons", "weight": 0.20},
+                {"name": "open", "weight": 0.25}
+            ]
+        },
+        "trials": {
+            "argument": "--trials",
+            "options": [
+                {"name": "0", "weight": 0.30},
+                {"name": "1", "weight": 0.05},
+                {"name": "2", "weight": 0.05},
+                {"name": "3", "weight": 0.20},
+                {"name": "4", "weight": 0.05},
+                {"name": "5", "weight": 0.05},
+                {"name": "6", "weight": 0.30}
+            ]
+        },
+        "tokensanity": {
+            "argument": "--tokensanity",
+            "options": [
+                {"name": "off", "weight": 0.75},
+                {"name": "dungeons", "weight": 0.15},
+                {"name": "all", "weight": 0.10}
+            ]
+        },
+        "other": [
+            {"name": "bombchus_in_logic", "weight": 0.50},
+            {"name": "all_reachable", "weight": 0.50},
+            {"name": "keysanity", "weight": 0.15},
+            {"name": "shuffle_gerudo_card", "weight": 0.30},
+            {"name": "shuffle_ocarinas", "weight": 0.30},
+            {"name": "shuffle_weird_egg", "weight": 0.30},
+            {"name": "ocarina_songs", "weight": 0.50},
+            {"name": "correct_chest_sizes", "weight": 0.30},
+            {"name": "ohko", "weight": 0.01},
+            {"name": "nodungeonitems", "weight": 0.25},
+            {"name": "progressive_bombchus", "weight": 0.30}
+        ]
+    }
+}
