@@ -7,7 +7,10 @@
         "discord_channel_id": "bot-channel-id-here",
         "base_rom_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.0).z64",
         "base_wad_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.2) [Wii VC].wad",
-        "output_directory": "/full/path/to/dailies/directory"
+        "output_directory": "/full/path/to/dailies/directory",
+        "allowed_roles": [
+            "@everyone"
+        ],
     },
     "settings_weighted": {
         "openness": {
@@ -47,6 +50,15 @@
                 {"name": "all", "weight": 0.10}
             ]
         },
+        "hints": {
+            "argument": "--hints",
+            "options": [
+                {"name": "none", "weight": 0},
+                {"name": "mask", "weight": 0.25},
+                {"name": "agony", "weight": 0.50},
+                {"name": "always", "weight": 0.25}
+            ]
+        },
         "other": [
             {"name": "bombchus_in_logic", "weight": 0.50},
             {"name": "all_reachable", "weight": 0.50},
@@ -58,7 +70,8 @@
             {"name": "correct_chest_sizes", "weight": 0.30},
             {"name": "ohko", "weight": 0.01},
             {"name": "nodungeonitems", "weight": 0.25},
-            {"name": "progressive_bombchus", "weight": 0.30}
+            {"name": "no_escape_sequence", "weight": 1},
+            {"name": "create_spoiler", "weight": 1}
         ]
     }
 }

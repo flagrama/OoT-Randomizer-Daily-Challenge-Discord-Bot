@@ -77,10 +77,10 @@ async def get_settings(settings_json):
 
     return generator_settings
 
-async def create_daily(setting, settings_json):
+async def create_daily(setting, settings_json, seed):
 
     if(sys.platform == 'linux'):
-        base_settings = ['python3', os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()))]
+        base_settings = ['python3', os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed]
         f = open('output', 'w')
         subprocess.call(base_settings + setting, stdout=f)
         f.close()
@@ -96,6 +96,10 @@ async def create_daily(setting, settings_json):
         seed = strings[1].strip()
 
         rom_name = 'OoT_' + settings_string + '_' + seed
+
+    return rom_name, settings_string
+
+async def compress_daily(rom_name, settings_json):
         process = await asyncio.create_subprocess_exec('Compress/Compress', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), cwd='./rando', stdout=asyncio.subprocess.PIPE)
         await process.wait()
 
@@ -103,8 +107,6 @@ async def create_daily(setting, settings_json):
         if not os.path.isdir(os.path.join(os.getcwd(), 'rom', 'common-key.bin')):
             subprocess.run(['gzinject', '-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
         subprocess.call(['gzinject', '--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
-
-    return rom_name, settings_string, seed
 
 async def upload_daily(rom_name, settings_json):
     process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
@@ -123,9 +125,12 @@ def main():
     with open('settings.json') as data_file:
         settings_json = json.loads(data_file.read())
 
+    if settings_json['config']['debug'] != 'true':
+        sys.tracebacklimit = 0
+
     TOKEN = settings_json['config']['discord_token']
 
-    client = discord.Client()
+    client = discord.ext.commands.Bot(command_prefix='!', description='A bot that generates daily seeds for Ocarina of Time Randomizer')
 
     # https://jacobbridges.github.io/post/how-many-seconds-until-midnight/
     def how_many_seconds_until_midnight():
@@ -135,48 +140,65 @@ def main():
                             day=tomorrow.day, hour=0, minute=0, second=0)
         return (midnight - datetime.datetime.utcnow()).seconds
         
-    @client.event
-    async def send_daily():
+    def is_allowed(ctx, *roles):
+        allowed_roles = []
+        for allowed_role in roles:
+            for role in allowed_role:
+                allowed_roles.extend(str([role]).lower())
+        author_roles = []
+        for author_role in ctx.message.author.roles:
+            author_roles.extend([author_role.name.lower()])
+        allowed = set(allowed_roles) & set(author_roles)
+
+        return allowed
+
+    @client.command(pass_context=True)
+    async def makedaily(ctx, num, seed):
         await client.wait_until_ready()
 
-        while not client.is_closed:
-            # Update JSON from file
-            with open('settings.json') as data_file:
-                settings_json = json.loads(data_file.read())
+        # Update JSON from file
+        with open('settings.json') as data_file:
+            settings_json = json.loads(data_file.read())
 
-            # Create output directory
-            if not os.path.isdir(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()))):
-                if not os.path.isdir(os.path.join(os.getcwd(), 'dailies')):
-                    os.mkdir(os.path.join(os.getcwd(), 'dailies'))
+        if not is_allowed(ctx, settings_json['config']['allowed_roles']):
+            logging.error('User ' + ctx.message.author.name + ' was denied permission to !makedaily')
+            return
 
-            channel = client.get_channel(settings_json['config']['discord_channel_id'])
+        channel = client.get_channel(settings_json['config']['discord_channel_id'])
 
-            # Create daily
-            update_rando(settings_json)
-            settings = await get_settings(settings_json)
-            rom_name, settings_string, seed = await create_daily(settings, settings_json)
+        # Create output directory
+        if not os.path.isdir(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()))):
+            if not os.path.isdir(os.path.join(os.getcwd(), 'dailies')):
+                os.mkdir(os.path.join(os.getcwd(), 'dailies'))
 
-            # Create Discord message
-            version = open(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'version.py')).readline()
-            version = version.split('\'')
+        # Create daily
+        update_rando(settings_json)
+        settings = await get_settings(settings_json)
+        rom_name, settings_string = await create_daily(settings, settings_json, seed)
 
-            markdown = 'And now for ***DAILY SEED CHALLENGE ' + str(datetime.date.today()) + '***\n'
-            markdown = markdown + 'Version ' + version[1] + ' - Settings: ' + settings_string + ' - Seed: REDACTED'
+        # Create Discord message
+        version = open(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'version.py')).readline()
+        version = version.split('\'')
 
-            message = await client.send_message(channel, content=markdown)
+        markdown = 'And now for ***DAILY SEED CHALLENGE ' + num + '***\n'
+        markdown = markdown + 'Version ' + version[1] + ' - Settings: ' + settings_string + ' - Seed: REDACTED'
 
-            # Sleep until midnight (UTC)
-            logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
-            await asyncio.sleep(how_many_seconds_until_midnight())
+        message = await client.send_message(channel, content=markdown)
+
+        # Sleep until midnight (UTC)
+        logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
+        await asyncio.sleep(how_many_seconds_until_midnight())
             
-            # Upload daily and add embed to message
-            link = await upload_daily(rom_name, settings_json)
-            markdown = markdown.replace('REDACTED', seed)
-            embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
-            embed.set_author(name="Daily Randomizer Challenge", url=link)
-            await client.edit_message(message, markdown, embed=embed)
+        # Compress daily and create WAD
+        await compress_daily(rom_name, settings_json)
+            
+        # Upload daily and add embed to message
+        link = await upload_daily(rom_name, settings_json)
+        markdown = markdown.replace('REDACTED', seed)
+        embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
+        embed.set_author(name="Daily Randomizer Challenge", url=link)
+        await client.edit_message(message, markdown, embed=embed)
 
-    client.loop.create_task(send_daily())
     client.run(TOKEN)
 
 if __name__ == "__main__":
