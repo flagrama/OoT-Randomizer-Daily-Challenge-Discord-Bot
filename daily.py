@@ -18,10 +18,11 @@ logger = None
 def update_rando(settings_json):
     repo_name = settings_json['config']['repo_local_name']
     repo_branch = settings_json['config']['repo_branch']
+    repo_url = settings_json['config']['repo_url']
 
     repo = git.Repo
     if not os.path.isdir(os.path.join(os.getcwd(), repo_name)):
-        repo = git.Repo.clone_from(settings_json['config']['repo_url'], repo_name)
+        repo = git.Repo.clone_from(repo_url, repo_name)
         repo.git.checkout(repo_branch)
     else:
         repo = git.Repo(os.path.join(os.getcwd(), repo_name))
@@ -109,8 +110,8 @@ async def compress_daily(rom_name, settings_json):
             subprocess.run(['gzinject', '-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
         subprocess.call(['gzinject', '--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
 
-async def upload_daily(rom_name, settings_json):
-    process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
+async def upload_daily(rom_name, output_dir):
+    process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
     if stderr:
         logger.error(stderr)
@@ -181,12 +182,15 @@ def main():
         with open('settings.json') as data_file:
             settings_json = json.loads(data_file.read())
 
-        if not is_allowed(ctx, settings_json['config']['allowed_roles']):
-            logging.error('User ' + ctx.message.author.name + ' was denied permission to !makedaily')
+        allowed_roles = settings_json['config']['allowed_roles']
+        output_directory = settings_json['config']['output_directory']
+
+        if not is_allowed(ctx, allowed_roles):
+            logging.error('User %s was denied permission to !makedaily' % ctx.message.author.name)
             return
 
         # Create output directory
-        if not os.path.isdir(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()))):
+        if not os.path.isdir(os.path.join(output_directory, str(datetime.date.today()))):
             if not os.path.isdir(os.path.join(os.getcwd(), 'dailies')):
                 os.mkdir(os.path.join(os.getcwd(), 'dailies'))
 
@@ -203,7 +207,7 @@ def main():
         markdown = markdown + """Version %s - Settings: %s - Seed: REDACTED""" % (version[1], settings_string)
 
         message = await ctx.message.channel.send(markdown)
-        await send_spoiler(ctx, settings_json['config']['output_directory'], rom_name, settings_json['config']['spoiler_users'])
+        await send_spoiler(ctx, output_directory, rom_name, settings_json['config']['spoiler_users'])
 
         # Sleep until midnight (UTC)
         logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
@@ -213,7 +217,7 @@ def main():
         await compress_daily(rom_name, settings_json)
             
         # Upload daily and add embed to message
-        link = await upload_daily(rom_name, settings_json)
+        link = await upload_daily(rom_name, output_directory)
         markdown = markdown.replace('REDACTED', seed)
         embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
         embed.set_author(name="Daily Randomizer Challenge", url=link)
