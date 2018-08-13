@@ -24,6 +24,7 @@ def update_rando(settings_json):
     if not os.path.isdir(os.path.join(os.getcwd(), repo_name)):
         repo = git.Repo.clone_from(repo_url, repo_name)
         repo.git.checkout(repo_branch)
+        repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
     else:
         repo = git.Repo(os.path.join(os.getcwd(), repo_name))
         repo.remotes.origin.fetch()
