@@ -172,7 +172,7 @@ def main():
             user = client.get_user(int(spoil_user))
             if user is not None:
                 # Send spoiler file then delete the message after an hour
-                await user.send(file=spoiler, delete_after=30)
+                await user.send(file=spoiler, delete_after=3600)
 
     @client.command(pass_context=True)
     async def makedaily(ctx, seed):
