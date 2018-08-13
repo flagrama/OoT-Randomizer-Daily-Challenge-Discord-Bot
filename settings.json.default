@@ -11,6 +11,8 @@
         "allowed_roles": [
             "@everyone"
         ],
+        "spoiler_users": [
+        ],
     },
     "settings_weighted": {
         "openness": {

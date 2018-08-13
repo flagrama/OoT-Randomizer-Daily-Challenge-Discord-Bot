@@ -153,6 +153,26 @@ def main():
 
         return allowed or ctx.message.author == ctx.guild.owner
 
+    async def send_spoiler(ctx, output_dir, rom_name, *users):
+        spoiler_name = rom_name.split('.')
+        spoiler_name = spoiler_name[0]
+        spoiler_name += '_Spoiler.txt'
+
+        spoiler = discord.File(fp=os.path.join(output_dir, str(datetime.date.today()), spoiler_name),filename=spoiler_name)
+        spoiler_users = []
+        for spoil_users in users:
+            for user in spoil_users:
+                spoiler_users.extend([str(user).lower()])
+
+        if not str(ctx.message.author.id) in spoiler_users:
+            spoiler_users.extend([str(ctx.message.author.id)])
+            
+        for spoil_user in spoiler_users:
+            user = client.get_user(int(spoil_user))
+            if user is not None:
+                # Send spoiler file then delete the message after an hour
+                await user.send(file=spoiler, delete_after=30)
+
     @client.command(pass_context=True)
     async def makedaily(ctx, seed):
         await client.wait_until_ready()
@@ -160,7 +180,7 @@ def main():
         # Update JSON from file
         with open('settings.json') as data_file:
             settings_json = json.loads(data_file.read())
-            
+
         if not is_allowed(ctx, settings_json['config']['allowed_roles']):
             logging.error('User ' + ctx.message.author.name + ' was denied permission to !makedaily')
             return
@@ -183,6 +203,7 @@ def main():
         markdown = markdown + """Version %s - Settings: %s - Seed: REDACTED""" % (version[1], settings_string)
 
         message = await ctx.message.channel.send(markdown)
+        await send_spoiler(ctx, settings_json['config']['output_directory'], rom_name, settings_json['config']['spoiler_users'])
 
         # Sleep until midnight (UTC)
         logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
