@@ -83,36 +83,51 @@ async def get_settings(settings_json):
 async def create_daily(setting, settings_json, seed):
 
     if(sys.platform == 'linux'):
-        base_settings = ['python3', os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed, '--compress_rom', 'False']
-        f = open('output', 'w')
-        subprocess.call(base_settings + setting, stdout=f)
-        f.close()
+        base_settings = ['python3']
+    elif(sys.platform == 'win32'):
+        base_settings = ['py', '-3']
 
-        strings = []
-        f = open('output', 'r')
-        for line in f:
-            strings.extend([line])
-        f.close()
-        os.remove('output')
+    base_settings = base_settings + [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed, '--compress_rom', 'False']
+    
+    f = open('output', 'w')
+    subprocess.call(base_settings + setting, stdout=f)
+    f.close()
 
-        settings_string = strings[0].strip()
-        seed = strings[1].strip()
+    strings = []
+    f = open('output', 'r')
+    for line in f:
+        strings.extend([line])
+    f.close()
+    os.remove('output')
 
-        rom_name = 'OoT_' + settings_string + '_' + seed
+    settings_string = strings[0].strip()
+    seed = strings[1].strip()
+
+    rom_name = 'OoT_' + settings_string + '_' + seed
 
     return rom_name, settings_string
 
 async def compress_daily(rom_name, settings_json):
+    if sys.platform == 'linux':
         process = await asyncio.create_subprocess_exec('Compress/Compress', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), cwd='./rando', stdout=asyncio.subprocess.PIPE)
-        await process.wait()
+    elif sys.platform == 'win32':
+        process = await asyncio.create_subprocess_exec(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'Compress', 'Compress.exe'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), stdout=asyncio.subprocess.PIPE)
+    await process.wait()
 
-        # Create Wad
-        if not os.path.isdir(os.path.join(os.getcwd(), 'rom', 'common-key.bin')):
-            subprocess.run(['gzinject', '-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
-        subprocess.call(['gzinject', '--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
+    # Create Wad
+    if sys.platform == 'linux':
+        gzinject = ['gzinject']
+    elif sys.platform == 'win32':
+        gzinject = ['gzinject.exe']
+    if not os.path.isdir(os.path.join(os.getcwd(), 'rom', 'common-key.bin')):
+        subprocess.run(gzinject + ['-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
+    subprocess.call(gzinject + ['--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
 
 async def upload_daily(rom_name, output_dir):
-    process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
+    if sys.platform == 'linux':
+        process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
+    elif sys.platform == 'win32':
+        process = await asyncio.create_subprocess_exec('py', '-3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
     if stderr:
         logger.error(stderr)
@@ -128,10 +143,17 @@ def main():
     with open('settings.json') as data_file:
         settings_json = json.loads(data_file.read())
 
-    if settings_json['config']['debug'] != 'true':
+    try: 
+        if settings_json['config']['debug'] != 'true':
+            sys.tracebacklimit = 0
+    except KeyError:
         sys.tracebacklimit = 0
 
     TOKEN = settings_json['config']['discord_token']
+
+    if sys.platform == 'win32':
+        loop = asyncio.ProactorEventLoop()
+        asyncio.set_event_loop(loop)
 
     client = commands.Bot(command_prefix='!', description='A bot that generates daily seeds for Ocarina of Time Randomizer')
 
