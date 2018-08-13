@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 import discord
+from discord.ext import commands
 import git
 from numpy.random import choice
 
@@ -130,7 +131,7 @@ def main():
 
     TOKEN = settings_json['config']['discord_token']
 
-    client = discord.ext.commands.Bot(command_prefix='!', description='A bot that generates daily seeds for Ocarina of Time Randomizer')
+    client = commands.Bot(command_prefix='!', description='A bot that generates daily seeds for Ocarina of Time Randomizer')
 
     # https://jacobbridges.github.io/post/how-many-seconds-until-midnight/
     def how_many_seconds_until_midnight():
@@ -144,27 +145,25 @@ def main():
         allowed_roles = []
         for allowed_role in roles:
             for role in allowed_role:
-                allowed_roles.extend(str([role]).lower())
+                allowed_roles.extend([str(role).lower()])
         author_roles = []
         for author_role in ctx.message.author.roles:
             author_roles.extend([author_role.name.lower()])
-        allowed = set(allowed_roles) & set(author_roles)
+        allowed = bool(set(allowed_roles) & set(author_roles))
 
-        return allowed
+        return allowed or ctx.message.author == ctx.guild.owner
 
     @client.command(pass_context=True)
-    async def makedaily(ctx, num, seed):
+    async def makedaily(ctx, seed):
         await client.wait_until_ready()
 
         # Update JSON from file
         with open('settings.json') as data_file:
             settings_json = json.loads(data_file.read())
-
+            
         if not is_allowed(ctx, settings_json['config']['allowed_roles']):
             logging.error('User ' + ctx.message.author.name + ' was denied permission to !makedaily')
             return
-
-        channel = client.get_channel(settings_json['config']['discord_channel_id'])
 
         # Create output directory
         if not os.path.isdir(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()))):
@@ -180,10 +179,10 @@ def main():
         version = open(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'version.py')).readline()
         version = version.split('\'')
 
-        markdown = 'And now for ***DAILY SEED CHALLENGE ' + num + '***\n'
-        markdown = markdown + 'Version ' + version[1] + ' - Settings: ' + settings_string + ' - Seed: REDACTED'
+        markdown = """And now for today's ***DAILY SEED CHALLENGE***\n"""
+        markdown = markdown + """Version %s - Settings: %s - Seed: REDACTED""" % (version[1], settings_string)
 
-        message = await client.send_message(channel, content=markdown)
+        message = await ctx.message.channel.send(markdown)
 
         # Sleep until midnight (UTC)
         logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
@@ -197,7 +196,7 @@ def main():
         markdown = markdown.replace('REDACTED', seed)
         embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
         embed.set_author(name="Daily Randomizer Challenge", url=link)
-        await client.edit_message(message, markdown, embed=embed)
+        await message.edit(content=markdown, embed=embed)
 
     client.run(TOKEN)
 
