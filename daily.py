@@ -81,7 +81,7 @@ async def get_settings(settings_json):
 async def create_daily(setting, settings_json, seed):
 
     if(sys.platform == 'linux'):
-        base_settings = ['python3', os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed]
+        base_settings = ['python3', os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed, '--compress_rom', 'False']
         f = open('output', 'w')
         subprocess.call(base_settings + setting, stdout=f)
         f.close()
