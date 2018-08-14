@@ -1,5 +1,7 @@
+import pydrive
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import os.path
 import shutil
 import argparse
 
@@ -14,11 +16,16 @@ def main():
 
     # Authenticate
     gauth = GoogleAuth()
-    gauth.LoadCredentialsFile('credentials.json')
+    if os.path.isfile('credentials.json'):
+        gauth.LoadCredentialsFile('credentials.json')
+
     if gauth.credentials is None:
         gauth.LocalWebserverAuth()
     elif gauth.access_token_expired:
-        gauth.Refresh()
+        try:
+            gauth.Refresh()
+        except pydrive.auth.RefreshError:
+            gauth.LocalWebserverAuth()
     else:
         gauth.Authorize()
     gauth.SaveCredentialsFile('credentials.json')
