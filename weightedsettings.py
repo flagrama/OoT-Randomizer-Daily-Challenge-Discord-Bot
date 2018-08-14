@@ -3,7 +3,7 @@ import random
 from numpy.random import choice
 
 def get_settings(settings_json):
-    logging.getLogger('daily-bot').info('\nStarted generating weighted random settings.\n')
+    logging.getLogger('daily-bot').info('Started generating weighted random settings.')
 
     # Settings by weight
     generator_settings = []
@@ -12,7 +12,7 @@ def get_settings(settings_json):
     for setting in settings_json['settings_weighted']:
         logging.getLogger('daily-bot').debug('Current setting group: %s' % setting)
         if setting == 'other':
-            logging.getLogger('daily-bot').debug('Skipping "other" for now\n')
+            logging.getLogger('daily-bot').debug('Skipping "other" for now')
             continue
         choices = []
         weights = []
@@ -30,10 +30,10 @@ def get_settings(settings_json):
             logging.getLogger('daily-bot').debug('Added choice "%s" with weight %s' % (options['name'], options['weight']))
 
         result = choice(choices, p=weights)
-        logging.getLogger('daily-bot').debug('Result: %s\n' % result)
+        logging.getLogger('daily-bot').debug('Result: %s' % result)
         if argument:
             value = result
-            logging.getLogger('daily-bot').debug('Argument: %s Value: %s\n' % (argument, value))
+            logging.getLogger('daily-bot').debug('Argument: %s Value: %s' % (argument, value))
         else:
             value = ''
 
@@ -55,6 +55,6 @@ def get_settings(settings_json):
             generator_settings.extend(['--' + setting['name']])
             logging.getLogger('daily-bot').debug('Adding setting: %s' % setting['name'])
 
-    logging.getLogger('daily-bot').info('\nFinished generating weighted random settings.\n')
+    logging.getLogger('daily-bot').info('Finished generating weighted random settings.')
     return generator_settings
     

@@ -3,7 +3,7 @@ import git
 import os
 
 def update_rando(settings_json):
-    logging.getLogger('daily-bot').info('\nStarted updating local OoT_Randomizer repository.\n')
+    logging.getLogger('daily-bot').info('Started updating local OoT_Randomizer repository.')
 
     repo_name = settings_json['config']['repo_local_name']
     repo_branch = settings_json['config']['repo_branch']
@@ -28,5 +28,5 @@ def update_rando(settings_json):
             repo.remotes.origin.pull()
             repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
         logging.getLogger('daily-bot').info('Repository is at the latest commit')
-    logging.getLogger('daily-bot').info('\nFinished updating local OoT_Randomizer repository.\n')
+    logging.getLogger('daily-bot').info('Finished updating local OoT_Randomizer repository.')
     

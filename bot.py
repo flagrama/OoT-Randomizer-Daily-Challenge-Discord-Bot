@@ -56,7 +56,7 @@ def main():
         return allowed or ctx.message.author == ctx.guild.owner
 
     async def send_spoiler(ctx, output_dir, rom_name, *users):
-        logging.getLogger('daily-bot').info('\nStarted sending spoiler file to spoil users.\n')
+        logging.getLogger('daily-bot').info('Started sending spoiler file to spoil users.')
         spoiler_name = rom_name.split('.')
         spoiler_name = spoiler_name[0]
         spoiler_name += '_Spoiler.txt'
@@ -78,11 +78,11 @@ def main():
                 logging.getLogger('daily-bot').debug('Sending spoiler file')
                 await user.send(file=spoiler, delete_after=3600)
 
-        logging.getLogger('daily-bot').info('\nFinished sending file to spoil users.')
+        logging.getLogger('daily-bot').info('Finished sending file to spoil users.')
 
     @client.command(pass_context=True)
     # pylint: disable=unused-variable
-    async def makedaily(ctx, seed):
+    async def makedaily(ctx, *seed_placeholder):
         await client.wait_until_ready()
 
         # Update JSON from file
@@ -106,7 +106,7 @@ def main():
         # Create daily
         repo.update_rando(settings_json)
         settings = weightedsettings.get_settings(settings_json)
-        rom_name, settings_string = daily.create_daily(settings, settings_json, seed)
+        rom_name, settings_string, seed = daily.create_daily(settings, settings_json)
 
         # Create Discord message
         logging.getLogger('daily-bot').debug('Obtaining randomizer version')
@@ -115,26 +115,30 @@ def main():
         logging.getLogger('daily-bot').debug('Randomizer version %s' % version[1])
 
         markdown = """And now for today's ***DAILY SEED CHALLENGE***\n"""
-        markdown = markdown + """Version %s - Settings: %s - Seed: REDACTED""" % (version[1], settings_string)
+        markdown = markdown + """Version %s - Settings: %s - Seed: %s""" % (version[1], settings_string, ' '.join(seed_placeholder))
 
         message = await ctx.message.channel.send(markdown)
         await send_spoiler(ctx, output_directory, rom_name, settings_json['config']['spoiler_users'])
 
-        # Sleep until midnight (UTC)
-        seconds = daily.how_many_seconds_until_midnight()
-        logging.getLogger('daily-bot').info('sleeping for %s seconds' % seconds)
-        await asyncio.sleep(seconds)
-            
         # Compress daily and create WAD
         await daily.compress_daily(rom_name, settings_json)
             
         # Upload daily and add embed to message
+        daily.scrub_seed_daily(rom_name, output_directory)
         link = await daily.upload_daily(rom_name, output_directory)
-        markdown = markdown.replace('REDACTED', seed)
-        embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
-        embed.set_author(name="Daily Randomizer Challenge", url=link)
+        embed=discord.Embed(title='Download the daily challenge now!', url=link, description='The daily for %s is now available!' % datetime.date.today())
+        embed.set_author(name='Daily Randomizer Challenge', url=link)
         logging.getLogger('daily-bot').debug('Adding embed with link %s to daily seed message' % link)
-        await message.edit(content=markdown, embed=embed)
+        await message.edit(embed=embed)
+        daily.clean_daily(output_directory)
+
+        if settings_json['config']['replace_placeholder']:
+            # Sleep until midnight (UTC) and reveal seed
+            seconds = daily.how_many_seconds_until_midnight()
+            logging.getLogger('daily-bot').info('sleeping for %s seconds' % seconds)
+            await asyncio.sleep(seconds)
+            markdown = markdown.replace(seed_placeholder, seed)
+            await message.edit(content=markdown)
 
     client.run(TOKEN)
 

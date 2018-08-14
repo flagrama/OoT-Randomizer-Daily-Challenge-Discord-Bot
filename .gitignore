@@ -10,3 +10,4 @@ common-key.bin
 credentials.json
 client_secrets.json
 settings.json
+settings.yaml

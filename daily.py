@@ -1,13 +1,14 @@
 import logging
 import os
+import shutil
 import sys
 import subprocess
 import datetime
 import asyncio
 import struct
 
-def create_daily(setting, settings_json, seed):
-    logging.getLogger('daily-bot').info('\nStarted generating randomized ROM.\n')
+def create_daily(setting, settings_json):
+    logging.getLogger('daily-bot').info('Started generating randomized ROM.')
 
     logging.getLogger('daily-bot').debug('Platform is %s' % sys.platform)
     if(sys.platform == 'linux'):
@@ -26,7 +27,6 @@ def create_daily(setting, settings_json, seed):
         [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), \
         '--rom', base_rom, \
         '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), \
-        '--seed', seed, \
         '--compress_rom', 'False']
     
     strings = []
@@ -50,16 +50,16 @@ def create_daily(setting, settings_json, seed):
 
     settings_string = strings[0].strip()
     seed = strings[1].strip()
-    logging.getLogger('daily-bot').debug('\nFrom OoT_Randomizer.py stdout - Setting String: %s Seed: %s' % (settings_string, seed))
+    logging.getLogger('daily-bot').debug('From OoT_Randomizer.py stdout - Setting String: %s Seed: %s' % (settings_string, seed))
 
     rom_name = 'OoT_' + settings_string + '_' + seed
     logging.getLogger('daily-bot').debug('Rom name: %s' % rom_name)
 
-    logging.getLogger('daily-bot').info('\nFinished generating randomized ROM.\n')
-    return rom_name, settings_string
+    logging.getLogger('daily-bot').info('Finished generating randomized ROM.')
+    return rom_name, settings_string, seed
 
 async def compress_daily(rom_name, settings_json):
-    logging.getLogger('daily-bot').info('\nStarted compressing ROM')
+    logging.getLogger('daily-bot').info('Started compressing ROM.')
 
     if sys.platform == 'linux':
         executable = 'Compress/Compress'
@@ -76,10 +76,10 @@ async def compress_daily(rom_name, settings_json):
                         cwd=os.path.join(os.getcwd(), 'rando'), \
                         stdout=asyncio.subprocess.PIPE)
     await process.wait()
-    logging.getLogger('daily-bot').info('Finished compressing ROM\n')
+    logging.getLogger('daily-bot').info('Finished compressing ROM.')
 
     # Create Wad
-    logging.getLogger('daily-bot').info('\nStarted creating WAD\n')
+    logging.getLogger('daily-bot').info('Started creating WAD.')
     if sys.platform == 'linux':
         gzinject = ['gzinject']
     elif sys.platform == 'win32':
@@ -89,10 +89,40 @@ async def compress_daily(rom_name, settings_json):
         subprocess.run(gzinject + ['-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
         logging.getLogger('daily-bot').debug('Generated common-key.bin successfully')
     subprocess.call(gzinject + ['--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
-    logging.getLogger('daily-bot').info('\nFinished creating WAD\n')
+    logging.getLogger('daily-bot').info('Finished creating WAD.')
+
+def scrub_seed_daily(rom_name, output_dir):
+    logging.getLogger('daily-bot').info('Started scrubbing seed.')
+    rom_name = rom_name.split('_')
+
+    # Uncompressed ROM
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '.z64'), \
+        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '.z64'))
+    logging.getLogger('daily-bot').debug('Scrubbed uncompressed ROM')
+
+    # Compressed ROM
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '-comp.z64'), \
+        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '-comp.z64'))
+    logging.getLogger('daily-bot').debug('Scrubbed compressed ROM')
+
+    # WAD
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '.wad'), \
+        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '.wad'))
+    logging.getLogger('daily-bot').debug('Scrubbed WAD')
+
+    # Spoiler log
+    os.remove(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '_Spoiler.txt'))
+    logging.getLogger('daily-bot').debug('Scrubbed spoiler')
+
+    logging.getLogger('daily-bot').info('Finished scrubbing seed.')
+
+def clean_daily(output_dir):
+    logging.getLogger('daily-bot').info('Started cleaning output directory.')
+    shutil.rmtree(os.path.join(output_dir))
+    logging.getLogger('daily-bot').info('Finished cleaning output directory.')
 
 async def upload_daily(rom_name, output_dir):
-    logging.getLogger('daily-bot').info('\nStarted uploading %s.zip\n' % datetime.date.today())
+    logging.getLogger('daily-bot').info('Started uploading %s.zip' % datetime.date.today())
     executable = list()
     if sys.platform == 'linux':
         executable.append('python3')
@@ -110,7 +140,7 @@ async def upload_daily(rom_name, output_dir):
     link = link[len(link) - 1]
     logging.getLogger('daily-bot').info('File uploaded to %s' % link)
 
-    logging.getLogger('daily-bot').info('\nFinished uploading %s.zip\n' % datetime.date.today())
+    logging.getLogger('daily-bot').info('Finished uploading %s.zip' % datetime.date.today())
     return link
 
 # https://jacobbridges.github.io/post/how-many-seconds-until-midnight/
