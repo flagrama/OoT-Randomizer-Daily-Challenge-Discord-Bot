@@ -18,10 +18,6 @@ Place the Ocarina of Time 1.0 U ROM and Ocarina of Time 1.2 WAD in the rom direc
 python -m pip install -r ./requirements.txt
 ```
 
-```bash
-python -m pip install -U https://github.com/Rapptz/discord.py/archive/master.zip#egg=discord.py
-```
-
 ### Configure Settings
 
 Rename `settings.json.default` to `settings.json` and then modify the configuration to suit your needs. By default no `discord_token`, `discord_channel_id` or `output_directory` are provided. There is also no limitation on which users can run commands. Ensure you replace `@everyone` with appropriate rules. Keep in mind only `@everyone` has the `@` in its role name normally. `spoiler_users` is a list of Discord User IDs as strings that will always be sent DMs containing the spoiler log for the generated seed.
