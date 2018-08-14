@@ -14,8 +14,13 @@ Download [gzinject](https://github.com/krimtonz/gzinject/releases) and place it 
 
 Place the Ocarina of Time 1.0 U ROM and Ocarina of Time 1.2 WAD in the rom directory. Update the `base_rom_name` and `base_wad_name` in `settings.json` if necessary.
 
-```python -m pip install -r ./requirements.txt```
-```python -m pip install -U https://github.com/Rapptz/discord.py/archive/master.zip#egg=discord.py```
+```bash
+python -m pip install -r ./requirements.txt
+```
+
+```bash
+python -m pip install -U https://github.com/Rapptz/discord.py/archive/master.zip#egg=discord.py
+```
 
 ### Configure Settings
 
@@ -25,4 +30,6 @@ In `settings_weighted` aside from `other` options all `weight` values in each se
 
 ### Run Bot
 
-```python bot.py```
+```bash
+python bot.py
+```
