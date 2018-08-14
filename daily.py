@@ -4,6 +4,7 @@ import sys
 import subprocess
 import datetime
 import asyncio
+import struct
 
 def create_daily(setting, settings_json, seed):
     logging.getLogger('daily-bot').info('\nStarted generating randomized ROM.\n')
@@ -42,10 +43,21 @@ def create_daily(setting, settings_json, seed):
 
 async def compress_daily(rom_name, settings_json):
     logging.getLogger('daily-bot').info('\nStarted compressing ROM')
+
     if sys.platform == 'linux':
-        process = await asyncio.create_subprocess_exec('Compress/Compress', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), cwd='./rando', stdout=asyncio.subprocess.PIPE)
+        executable = 'Compress/Compress'
     elif sys.platform == 'win32':
-        process = await asyncio.create_subprocess_exec(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'Compress', 'Compress.exe'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), stdout=asyncio.subprocess.PIPE)
+        if 8 * struct.calcsize("P") == 64:
+            executable = os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'Compress', 'Compress.exe')
+        else:
+            executable = os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'Compress', 'Compress32.exe')
+    
+    process = await asyncio.create_subprocess_exec(executable, \
+                        os.path.join(os.path.join(settings_json['config']['output_directory'], \
+                        str(datetime.date.today())), rom_name + '.z64'), \
+                        os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), \
+                        cwd=os.path.join(os.getcwd(), 'rando'), \
+                        stdout=asyncio.subprocess.PIPE)
     await process.wait()
     logging.getLogger('daily-bot').info('Finished compressing ROM\n')
 
