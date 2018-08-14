@@ -26,11 +26,3 @@ In `settings_weighted` aside from `other` options all `weight` values in each se
 ### Run Bot
 
 ```python daily.py```
-
-## Known Issues
-
-The `discord.py` library will throw `HTTPException: BAD REQUEST (status code: 400): Invalid Form Body` if credentials are not found for `upload.py`. To avoid this issue it is recommended to run create a new empty directory, called `test` in this example, and run:
-
-```python upload.py test test```
-
-Once you finish the initial authentication and have a `credentials.json` file you should be able to run the bot without any issues.

@@ -123,7 +123,7 @@ async def create_daily(setting, settings_json, seed):
     with open(tempfile, 'r') as output:
         for line in output:
             logger.debug('Reading stdout of OoT_Randomizer.py')
-        strings.extend([line])
+            strings.extend([line])
     logger.debug('Removing temporary file containing stdout of OoT_Randomizer.py')
     os.remove(tempfile)
 
@@ -186,7 +186,7 @@ def main():
         settings_json = json.loads(data_file.read())
 
     try: 
-        if settings_json['config']['debug'] != 'true':
+        if not settings_json['config']['debug']:
             sys.tracebacklimit = 0
             print(logger)
             logger.setLevel(logging.ERROR)
