@@ -12,14 +12,8 @@ from discord.ext import commands
 import git
 from numpy.random import choice
 
-logger = logging.getLogger('dailies')
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-logger.addHandler(ch)
-
 def update_rando(settings_json):
-    logger.info('\nStarted updating local OoT_Randomizer repository.\n')
+    logging.getLogger('daily-bot').info('\nStarted updating local OoT_Randomizer repository.\n')
 
     repo_name = settings_json['config']['repo_local_name']
     repo_branch = settings_json['config']['repo_branch']
@@ -30,33 +24,33 @@ def update_rando(settings_json):
         repo = git.Repo.clone_from(repo_url, repo_name)
         repo.git.checkout(repo_branch)
         repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
-        logger.info('Cloned repository to %s and applied patch' % repo_name)
+        logging.getLogger('daily-bot').info('Cloned repository to %s and applied patch' % repo_name)
     else:
         repo = git.Repo(os.path.join(os.getcwd(), repo_name))
         repo.remotes.origin.fetch()
         commits_behind = repo.iter_commits(repo_branch + '..origin/' + repo_branch)
         count = sum(1 for c in commits_behind)
         if(count > 0):
-            logger.info('%s commits behind %s, pulling latest version' % (count, repo_branch))
+            logging.getLogger('daily-bot').info('%s commits behind %s, pulling latest version' % (count, repo_branch))
             repo = git.Repo(os.path.join(os.getcwd(), repo_name))
             repo.git.checkout(repo_branch)
             repo.git.reset('--hard')
             repo.remotes.origin.pull()
             repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
-        logger.info('Repository is at the latest commit')
-    logger.info('\nFinished updating local OoT_Randomizer repository.\n')
+        logging.getLogger('daily-bot').info('Repository is at the latest commit')
+    logging.getLogger('daily-bot').info('\nFinished updating local OoT_Randomizer repository.\n')
 
-async def get_settings(settings_json):
-    logger.info('\nStarted generating weighted random settings.\n')
+def get_settings(settings_json):
+    logging.getLogger('daily-bot').info('\nStarted generating weighted random settings.\n')
 
     # Settings by weight
     generator_settings = []
 
     # Logic with multiple choices
     for setting in settings_json['settings_weighted']:
-        logger.debug('Current setting group: %s' % setting)
+        logging.getLogger('daily-bot').debug('Current setting group: %s' % setting)
         if setting == 'other':
-            logger.debug('Skipping "other" for now\n')
+            logging.getLogger('daily-bot').debug('Skipping "other" for now\n')
             continue
         choices = []
         weights = []
@@ -67,17 +61,17 @@ async def get_settings(settings_json):
 
         if 'argument' in this_setting:
             argument = this_setting['argument']
-            logger.debug('Setting: %s Argument: %s' % (setting, argument))
+            logging.getLogger('daily-bot').debug('Setting: %s Argument: %s' % (setting, argument))
         for options in this_setting['options']:
             choices.extend([options['name']])
             weights.extend([options['weight']])
-            logger.debug('Added choice "%s" with weight %s' % (options['name'], options['weight']))
+            logging.getLogger('daily-bot').debug('Added choice "%s" with weight %s' % (options['name'], options['weight']))
 
         result = choice(choices, p=weights)
-        logger.debug('Result: %s\n' % result)
+        logging.getLogger('daily-bot').debug('Result: %s\n' % result)
         if argument:
             value = result
-            logger.debug('Argument: %s Value: %s\n' % (argument, value))
+            logging.getLogger('daily-bot').debug('Argument: %s Value: %s\n' % (argument, value))
         else:
             value = ''
 
@@ -97,15 +91,15 @@ async def get_settings(settings_json):
     for setting in settings_json['settings_weighted']['other']:
         if(random.random() < setting['weight']):
             generator_settings.extend(['--' + setting['name']])
-            logger.debug('Adding setting: %s' % setting['name'])
+            logging.getLogger('daily-bot').debug('Adding setting: %s' % setting['name'])
 
-    logger.info('\nFinished generating weighted random settings.\n')
+    logging.getLogger('daily-bot').info('\nFinished generating weighted random settings.\n')
     return generator_settings
 
-async def create_daily(setting, settings_json, seed):
-    logger.info('\nStarted generating randomized ROM.\n')
+def create_daily(setting, settings_json, seed):
+    logging.getLogger('daily-bot').info('\nStarted generating randomized ROM.\n')
 
-    logger.debug('Platform is %s' % sys.platform)
+    logging.getLogger('daily-bot').debug('Platform is %s' % sys.platform)
     if(sys.platform == 'linux'):
         base_settings = ['python3']
     elif(sys.platform == 'win32'):
@@ -116,51 +110,51 @@ async def create_daily(setting, settings_json, seed):
     strings = []
     tempfile = 'output'
     with open(tempfile, 'w') as output:
-        logger.debug('Create ROM with base settings: %s' % ' '.join(base_settings))
-        logger.debug('Create ROM with weighted settings: %s' % ' '.join(setting))
-        logger.debug('Output stdout to: %s' % output.name)
+        logging.getLogger('daily-bot').debug('Create ROM with base settings: %s' % ' '.join(base_settings))
+        logging.getLogger('daily-bot').debug('Create ROM with weighted settings: %s' % ' '.join(setting))
+        logging.getLogger('daily-bot').debug('Output stdout to: %s' % output.name)
         subprocess.call(base_settings + setting, stdout=output)
     with open(tempfile, 'r') as output:
         for line in output:
-            logger.debug('Reading stdout of OoT_Randomizer.py')
+            logging.getLogger('daily-bot').debug('Reading stdout of OoT_Randomizer.py')
             strings.extend([line])
-    logger.debug('Removing temporary file containing stdout of OoT_Randomizer.py')
+    logging.getLogger('daily-bot').debug('Removing temporary file containing stdout of OoT_Randomizer.py')
     os.remove(tempfile)
 
     settings_string = strings[0].strip()
     seed = strings[1].strip()
-    logger.debug('\nFrom OoT_Randomizer.py stdout - Setting String: %s Seed: %s' % (settings_string, seed))
+    logging.getLogger('daily-bot').debug('\nFrom OoT_Randomizer.py stdout - Setting String: %s Seed: %s' % (settings_string, seed))
 
     rom_name = 'OoT_' + settings_string + '_' + seed
-    logger.debug('Rom name: %s' % rom_name)
+    logging.getLogger('daily-bot').debug('Rom name: %s' % rom_name)
 
-    logger.info('\nFinished generating randomized ROM.\n')
+    logging.getLogger('daily-bot').info('\nFinished generating randomized ROM.\n')
     return rom_name, settings_string
 
 async def compress_daily(rom_name, settings_json):
-    logger.info('\nStarted compressing ROM')
+    logging.getLogger('daily-bot').info('\nStarted compressing ROM')
     if sys.platform == 'linux':
         process = await asyncio.create_subprocess_exec('Compress/Compress', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), cwd='./rando', stdout=asyncio.subprocess.PIPE)
     elif sys.platform == 'win32':
         process = await asyncio.create_subprocess_exec(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'Compress', 'Compress.exe'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '.z64'), os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), stdout=asyncio.subprocess.PIPE)
     await process.wait()
-    logger.info('Finished compressing ROM\n')
+    logging.getLogger('daily-bot').info('Finished compressing ROM\n')
 
     # Create Wad
-    logger.info('\nStarted creating WAD\n')
+    logging.getLogger('daily-bot').info('\nStarted creating WAD\n')
     if sys.platform == 'linux':
         gzinject = ['gzinject']
     elif sys.platform == 'win32':
         gzinject = ['gzinject.exe']
     if not os.path.isdir(os.path.join(os.getcwd(), 'rom', 'common-key.bin')):
-        logger.debug('Generating common-key.bin')
+        logging.getLogger('daily-bot').debug('Generating common-key.bin')
         subprocess.run(gzinject + ['-a', 'genkey'], stdout=subprocess.PIPE, input=b'45e', cwd=os.path.join(os.getcwd(), 'rom'))
-        logger.debug('Generated common-key.bin successfully')
+        logging.getLogger('daily-bot').debug('Generated common-key.bin successfully')
     subprocess.call(gzinject + ['--cleanup', '-a', 'inject', '-w', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_wad_name']), '-i', 'NDYE', '-t', 'OoT Randomized', '-o', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), rom_name + '.wad'), '--rom', os.path.join(os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), rom_name + '-comp.z64'), '--disable-controller-remappings', '--key', os.path.join(os.getcwd(), 'rom', 'common-key.bin')])
-    logger.info('\nFinished creating WAD\n')
+    logging.getLogger('daily-bot').info('\nFinished creating WAD\n')
 
 async def upload_daily(rom_name, output_dir):
-    logger.info('\nStarted uploading %s.zip\n' % datetime.date.today())
+    logging.getLogger('daily-bot').info('\nStarted uploading %s.zip\n' % datetime.date.today())
     executable = list()
     if sys.platform == 'linux':
         executable.append('python3')
@@ -172,38 +166,48 @@ async def upload_daily(rom_name, output_dir):
     stdout, stderr = await process.communicate()
     
     if stderr:
-        logger.error(stderr)
+        logging.getLogger('daily-bot').error(stderr)
     link = stdout.decode().strip()
     link = link.split('\n')
     link = link[len(link) - 1]
-    logger.info('File uploaded to %s' % link)
+    logging.getLogger('daily-bot').info('File uploaded to %s' % link)
 
-    logger.info('\nFinished uploading %s.zip\n' % datetime.date.today())
+    logging.getLogger('daily-bot').info('\nFinished uploading %s.zip\n' % datetime.date.today())
     return link
 
 def main():
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.ERROR)
+    logger = logging.getLogger('daily-bot')
+    logger.setLevel(logging.ERROR)
+    logger.addHandler(ch)
+
     with open('settings.json') as data_file:
         settings_json = json.loads(data_file.read())
 
     try: 
-        if not settings_json['config']['debug']:
+        if settings_json['config']['debug']:
+            ch = logging.StreamHandler(sys.stdout)
+            ch.setLevel(logging.DEBUG)
+            logger = logging.getLogger('daily-bot')
+            logger.setLevel(logging.DEBUG)
+            logger.addHandler(ch)
+        else:
             sys.tracebacklimit = 0
-            print(logger)
-            logger.setLevel(logging.ERROR)
     except KeyError:
         sys.tracebacklimit = 0
-        logger.setLevel(logging.ERROR)
-    logger.info('JSON loaded')
+        
+    logging.getLogger('daily-bot').info('JSON loaded')
 
     TOKEN = settings_json['config']['discord_token']
 
     if sys.platform == 'win32':
         loop = asyncio.ProactorEventLoop()
         asyncio.set_event_loop(loop)
-        logger.info('Windows event loop set to ProactorEventLoop')
+        logging.getLogger('daily-bot').info('Windows event loop set to ProactorEventLoop')
 
     client = commands.Bot(command_prefix='!', description='A bot that generates daily seeds for Ocarina of Time Randomizer')
-    logger.info('Bot client established')
+    logging.getLogger('daily-bot').info('Bot client established')
 
     # https://jacobbridges.github.io/post/how-many-seconds-until-midnight/
     def how_many_seconds_until_midnight():
@@ -226,7 +230,7 @@ def main():
         return allowed or ctx.message.author == ctx.guild.owner
 
     async def send_spoiler(ctx, output_dir, rom_name, *users):
-        logger.info('\nStarted sending spoiler file to spoil users.\n')
+        logging.getLogger('daily-bot').info('\nStarted sending spoiler file to spoil users.\n')
         spoiler_name = rom_name.split('.')
         spoiler_name = spoiler_name[0]
         spoiler_name += '_Spoiler.txt'
@@ -238,17 +242,17 @@ def main():
                 spoiler_users.extend([str(user).lower()])
 
         if not str(ctx.message.author.id) in spoiler_users:
-            logger.debug('Adding command author to spoil users')
+            logging.getLogger('daily-bot').debug('Adding command author to spoil users')
             spoiler_users.extend([str(ctx.message.author.id)])
-        logger.debug('Spoiler users: %s' % spoiler_users)
+        logging.getLogger('daily-bot').debug('Spoiler users: %s' % spoiler_users)
             
         for spoil_user in spoiler_users:
             user = client.get_user(int(spoil_user))
             if user is not None:
-                logger.debug('Sending spoiler file')
-                await user.send(file=spoiler, delete_after=3600)
+                logging.getLogger('daily-bot').debug('Sending spoiler file')
+                await user.send(file=spoiler, delete_after=3)
 
-        logger.info('\nFinished sending file to spoil users.')
+        logging.getLogger('daily-bot').info('\nFinished sending file to spoil users.')
 
     @client.command(pass_context=True)
     # pylint: disable=unused-variable
@@ -258,7 +262,7 @@ def main():
         # Update JSON from file
         with open('settings.json') as data_file:
             settings_json = json.loads(data_file.read())
-            logger.info('JSON settings refreshed')
+            logging.getLogger('daily-bot').info('JSON settings refreshed')
 
         allowed_roles = settings_json['config']['allowed_roles']
         output_directory = settings_json['config']['output_directory']
@@ -279,10 +283,10 @@ def main():
         rom_name, settings_string = await create_daily(settings, settings_json, seed)
 
         # Create Discord message
-        logger.debug('Obtaining randomizer version')
+        logging.getLogger('daily-bot').debug('Obtaining randomizer version')
         version = open(os.path.join(os.getcwd(), settings_json['config']['repo_local_name'], 'version.py')).readline()
         version = version.split('\'')
-        logger.debug('Randomizer version %s' % version[1])
+        logging.getLogger('daily-bot').debug('Randomizer version %s' % version[1])
 
         markdown = """And now for today's ***DAILY SEED CHALLENGE***\n"""
         markdown = markdown + """Version %s - Settings: %s - Seed: REDACTED""" % (version[1], settings_string)
@@ -291,8 +295,8 @@ def main():
         await send_spoiler(ctx, output_directory, rom_name, settings_json['config']['spoiler_users'])
 
         # Sleep until midnight (UTC)
-        logger.info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
-        await asyncio.sleep(how_many_seconds_until_midnight())
+        logging.getLogger('daily-bot').info('sleeping for ' + str(how_many_seconds_until_midnight()) + ' seconds')
+        #await asyncio.sleep(how_many_seconds_until_midnight())
             
         # Compress daily and create WAD
         await compress_daily(rom_name, settings_json)
@@ -302,7 +306,7 @@ def main():
         markdown = markdown.replace('REDACTED', seed)
         embed=discord.Embed(title="Download the daily challenge now!", url=link, description="Daily " + rom_name)
         embed.set_author(name="Daily Randomizer Challenge", url=link)
-        logger.debug('Adding embed with link %s to daily seed message' % link)
+        logging.getLogger('daily-bot').debug('Adding embed with link %s to daily seed message' % link)
         await message.edit(content=markdown, embed=embed)
 
     client.run(TOKEN)

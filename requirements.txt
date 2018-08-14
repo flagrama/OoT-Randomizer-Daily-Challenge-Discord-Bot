@@ -2,7 +2,7 @@ aiohttp==2.2.5
 async-timeout==3.0.0
 cachetools==2.1.0
 chardet==3.0.4
-discord-rewrite==1.0.0
+git+git://github.com/Rapptz/discord.py.git@8ccb98d#egg=discord.py
 gitdb2==2.0.4
 GitPython==2.1.11
 google-api-python-client==1.7.4

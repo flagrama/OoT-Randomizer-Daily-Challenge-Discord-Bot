@@ -1,14 +1,13 @@
 .vscode/
 rando/
 wadextract/
+dailies/
 
 *.z64
 *.wad
-*.zip
 
 common-key.bin
 credentials.json
 client_secrets.json
-base_credentials.json
 settings.json
 ARCHIVE.bin
