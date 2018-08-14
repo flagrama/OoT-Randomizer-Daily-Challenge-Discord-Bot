@@ -24,7 +24,7 @@ def create_daily(setting, settings_json, seed):
 
     base_settings = base_settings + \
         [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), \
-        '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), \
+        '--rom', base_rom, \
         '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), \
         '--seed', seed, \
         '--compress_rom', 'False']
