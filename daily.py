@@ -170,9 +170,12 @@ async def upload_daily(rom_name, output_dir):
 
     process = await asyncio.create_subprocess_exec(*executable, 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
+    
     if stderr:
         logger.error(stderr)
     link = stdout.decode().strip()
+    link = link.split('\n')
+    link = link[len(link) - 1]
     logger.info('File uploaded to %s' % link)
 
     logger.info('\nFinished uploading %s.zip\n' % datetime.date.today())
