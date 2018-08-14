@@ -161,10 +161,14 @@ async def compress_daily(rom_name, settings_json):
 
 async def upload_daily(rom_name, output_dir):
     logger.info('\nStarted uploading %s.zip\n' % datetime.date.today())
+    executable = list()
     if sys.platform == 'linux':
-        process = await asyncio.create_subprocess_exec('python3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
+        executable.append('python3')
     elif sys.platform == 'win32':
-        process = await asyncio.create_subprocess_exec('py', '-3', 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
+        executable.append('py')
+        executable.append('-3')
+
+    process = await asyncio.create_subprocess_exec(*executable, 'upload.py', rom_name, os.path.join(output_dir, str(datetime.date.today())), stdout=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
     if stderr:
         logger.error(stderr)
