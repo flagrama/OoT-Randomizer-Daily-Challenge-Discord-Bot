@@ -25,4 +25,4 @@ In `settings_weighted` aside from `other` options all `weight` values in each se
 
 ### Run Bot
 
-```python daily.py```
+```python bot.py```
