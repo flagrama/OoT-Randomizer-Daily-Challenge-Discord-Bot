@@ -15,7 +15,19 @@ def create_daily(setting, settings_json, seed):
     elif(sys.platform == 'win32'):
         base_settings = ['py', '-3']
 
-    base_settings = base_settings + [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), '--seed', seed, '--compress_rom', 'False']
+    zootdec = os.path.join(os.getcwd(), 'rando', 'ZOOTDEC.z64')
+
+    if os.path.isfile(zootdec):
+        base_rom = zootdec
+    else:
+        base_rom = settings_json['config']['base_rom_name']
+
+    base_settings = base_settings + \
+        [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), \
+        '--rom', os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name']), \
+        '--output_dir', os.path.join(settings_json['config']['output_directory'], str(datetime.date.today())), \
+        '--seed', seed, \
+        '--compress_rom', 'False']
     
     strings = []
     tempfile = 'output'
@@ -23,7 +35,12 @@ def create_daily(setting, settings_json, seed):
         logging.getLogger('daily-bot').debug('Create ROM with base settings: %s' % ' '.join(base_settings))
         logging.getLogger('daily-bot').debug('Create ROM with weighted settings: %s' % ' '.join(setting))
         logging.getLogger('daily-bot').debug('Output stdout to: %s' % output.name)
-        subprocess.call(base_settings + setting, stdout=output)
+        subprocess.call(base_settings + setting, cwd=os.path.join(os.getcwd(), 'rando'), stdout=output)
+
+        extra_zootdec = os.path.join(settings_json['config']['output_directory'], str(datetime.date.today()), 'ZOOTDEC.z64')
+        if os.path.isfile(extra_zootdec):
+            os.rename(extra_zootdec, zootdec)
+            
     with open(tempfile, 'r') as output:
         for line in output:
             logging.getLogger('daily-bot').debug('Reading stdout of OoT_Randomizer.py')
