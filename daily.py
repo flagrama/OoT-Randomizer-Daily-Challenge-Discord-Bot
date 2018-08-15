@@ -21,7 +21,8 @@ def create_daily(setting, settings_json):
     if os.path.isfile(zootdec):
         base_rom = zootdec
     else:
-        base_rom = settings_json['config']['base_rom_name']
+        base_rom = os.path.join(os.getcwd(), 'rom', settings_json['config']['base_rom_name'])
+    print(base_rom)
 
     base_settings = base_settings + \
         [os.path.join(os.getcwd(), 'rando', 'OoTRandomizer.py'), \

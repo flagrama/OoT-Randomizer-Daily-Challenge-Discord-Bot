@@ -1,0 +1,44 @@
+From 817441a8e2b09491a021503d76f59d3c9c6f5e62 Mon Sep 17 00:00:00 2001
+From: Vincent Cunningham <v.cunningham@flagrama.com>
+Date: Tue, 14 Aug 2018 20:47:40 -0400
+Subject: [PATCH] remove gui dependencies
+
+---
+ OoTRandomizer.py | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/OoTRandomizer.py b/OoTRandomizer.py
+index bafbaea..30ac3d3 100644
+--- a/OoTRandomizer.py
++++ b/OoTRandomizer.py
+@@ -6,7 +6,7 @@ import random
+ import textwrap
+ import sys
+ 
+-from Gui import guiMain
++#from Gui import guiMain
+ from Main import main
+ from Utils import is_bundled, close_console
+ from Rom import get_tunic_color_options, get_navi_color_options
+@@ -29,7 +29,7 @@ def start():
+         # interface shouuld specify at least one option, possibly setting a value to a
+         # default if they like all the defaults
+         close_console()
+-        guiMain()
++        #guiMain()
+         sys.exit(0)
+ 
+     # ToDo: Validate files further than mere existance
+@@ -42,7 +42,8 @@ def start():
+     logging.basicConfig(format='%(message)s', level=loglevel)
+ 
+     if gui:
+-        guiMain(settings)
++        #guiMain(settings)
++        None
+     elif settings.count is not None:
+         orig_seed = settings.seed
+         for i in range(settings.count):
+-- 
+2.17.1
+

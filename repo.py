@@ -2,6 +2,11 @@ import logging
 import git
 import os
 
+def apply_patches(repo):
+    patches = os.listdir(os.path.join(os.getcwd(), 'patches'))
+    for patch in patches:
+        repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches', patch)])
+
 def update_rando(settings_json):
     logging.getLogger('daily-bot').info('Started updating local OoT_Randomizer repository.')
 
@@ -13,8 +18,8 @@ def update_rando(settings_json):
     if not os.path.isdir(os.path.join(os.getcwd(), repo_name)):
         repo = git.Repo.clone_from(repo_url, repo_name)
         repo.git.checkout(repo_branch)
-        repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
-        logging.getLogger('daily-bot').info('Cloned repository to %s and applied patch' % repo_name)
+        apply_patches(repo)
+        logging.getLogger('daily-bot').info('Cloned repository to %s and applied patches' % repo_name)
     else:
         repo = git.Repo(os.path.join(os.getcwd(), repo_name))
         repo.remotes.origin.fetch()
@@ -26,7 +31,8 @@ def update_rando(settings_json):
             repo.git.checkout(repo_branch)
             repo.git.reset('--hard')
             repo.remotes.origin.pull()
-            repo.git.execute(['git','apply', os.path.join(os.getcwd(), 'patches/0001-output-string.patch')])
+            apply_patches(repo)
+            logging.getLogger('daily-bot').info('Updated repository to %s and applied patches' % repo_name)
         logging.getLogger('daily-bot').info('Repository is at the latest commit')
     logging.getLogger('daily-bot').info('Finished updating local OoT_Randomizer repository.')
     
