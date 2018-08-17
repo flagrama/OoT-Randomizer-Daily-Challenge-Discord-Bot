@@ -124,8 +124,8 @@ def main():
         await daily.compress_daily(rom_name, settings_json)
             
         # Upload daily and add embed to message
-        daily.scrub_seed_daily(rom_name, output_directory)
-        link = await daily.upload_daily(rom_name, output_directory)
+        new_rom_name = daily.scrub_seed_daily(rom_name, output_directory)
+        link = await daily.upload_daily(new_rom_name, output_directory)
         embed=discord.Embed(title='Download the daily challenge now!', url=link, description='The daily for %s is now available!' % datetime.date.today())
         embed.set_author(name='Daily Randomizer Challenge', url=link)
         logging.getLogger('daily-bot').debug('Adding embed with link %s to daily seed message' % link)

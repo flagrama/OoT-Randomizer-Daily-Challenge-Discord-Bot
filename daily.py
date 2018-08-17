@@ -95,27 +95,30 @@ async def compress_daily(rom_name, settings_json):
 def scrub_seed_daily(rom_name, output_dir):
     logging.getLogger('daily-bot').info('Started scrubbing seed.')
     rom_name = rom_name.split('_')
+    new_rom_name = '_'.join([rom_name[0], rom_name[1]])
 
     # Uncompressed ROM
-    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '.z64'), \
-        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '.z64'))
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([new_rom_name, rom_name[2]]) + '.z64'), \
+        os.path.join(output_dir, str(datetime.date.today()), new_rom_name + '.z64'))
     logging.getLogger('daily-bot').debug('Scrubbed uncompressed ROM')
 
     # Compressed ROM
-    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '-comp.z64'), \
-        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '-comp.z64'))
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([new_rom_name, rom_name[2]]) + '-comp.z64'), \
+        os.path.join(output_dir, str(datetime.date.today()), new_rom_name + '-comp.z64'))
     logging.getLogger('daily-bot').debug('Scrubbed compressed ROM')
 
     # WAD
-    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '.wad'), \
-        os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1]]) + '.wad'))
+    os.rename(os.path.join(output_dir, str(datetime.date.today()), '_'.join([new_rom_name, rom_name[2]]) + '.wad'), \
+        os.path.join(output_dir, str(datetime.date.today()), new_rom_name + '.wad'))
     logging.getLogger('daily-bot').debug('Scrubbed WAD')
 
     # Spoiler log
-    os.remove(os.path.join(output_dir, str(datetime.date.today()), '_'.join([rom_name[0], rom_name[1], rom_name[2]]) + '_Spoiler.txt'))
+    os.remove(os.path.join(output_dir, str(datetime.date.today()), '_'.join([new_rom_name, rom_name[2]]) + '_Spoiler.txt'))
     logging.getLogger('daily-bot').debug('Scrubbed spoiler')
 
     logging.getLogger('daily-bot').info('Finished scrubbing seed.')
+
+    return new_rom_name
 
 def clean_daily(output_dir):
     logging.getLogger('daily-bot').info('Started cleaning output directory.')
