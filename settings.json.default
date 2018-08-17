@@ -62,17 +62,23 @@
                 {"name": "always", "weight": 0.25}
             ]
         },
+        "keysanity": {
+            "argument": "--shuffle_dungeon_items",
+            "options": [
+                {"name": "off", "weight": 0.60},
+                {"name": "mapcompass", "weight": 0.25},
+                {"name": "keysanity", "weight": 0.15}
+            ]
+        },
         "other": [
             {"name": "bombchus_in_logic", "weight": 0.50},
             {"name": "all_reachable", "weight": 0.50},
-            {"name": "keysanity", "weight": 0.15},
             {"name": "shuffle_gerudo_card", "weight": 0.30},
             {"name": "shuffle_ocarinas", "weight": 0.30},
             {"name": "shuffle_weird_egg", "weight": 0.30},
             {"name": "ocarina_songs", "weight": 0.50},
             {"name": "correct_chest_sizes", "weight": 0.30},
             {"name": "ohko", "weight": 0.01},
-            {"name": "nodungeonitems", "weight": 0.25},
             {"name": "no_escape_sequence", "weight": 1},
             {"name": "create_spoiler", "weight": 1}
         ]
