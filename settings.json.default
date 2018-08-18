@@ -4,7 +4,6 @@
         "repo_branch": "Dev",
         "repo_local_name": "rando",
         "discord_token": "bot-token-here",
-        "discord_channel_id": "bot-channel-id-here",
         "base_rom_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.0).z64",
         "base_wad_name": "Legend of Zelda, The - Ocarina of Time (U) (V1.2) [Wii VC].wad",
         "output_directory": "/full/path/to/dailies/directory",

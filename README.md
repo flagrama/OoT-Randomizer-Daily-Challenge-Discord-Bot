@@ -20,7 +20,7 @@ python -m pip install -r ./requirements.txt
 
 ### Configure Settings
 
-Rename `settings.json.default` to `settings.json` and then modify the configuration to suit your needs. By default no `discord_token`, `discord_channel_id` or `output_directory` are provided. There is also no limitation on which users can run commands. Ensure you replace `@everyone` with appropriate rules. Keep in mind only `@everyone` has the `@` in its role name normally. `spoiler_users` is a list of Discord User IDs as strings that will always be sent DMs containing the spoiler log for the generated seed.
+Rename `settings.json.default` to `settings.json` and then modify the configuration to suit your needs. By default no `discord_token` or `output_directory` are provided. There is also no limitation on which users can run commands. Ensure you replace `@everyone` with appropriate rules. Keep in mind only `@everyone` has the `@` in its role name normally. `spoiler_users` is a list of Discord User IDs as strings that will always be sent DMs containing the spoiler log for the generated seed.
 
 In `settings_weighted` aside from `other` options all `weight` values in each section must add up to `1` or else an error will occur. You however do not need to keep all the options. You can remove any you don't want at all, just remember to keep the sum `weight` values `1`.
 
